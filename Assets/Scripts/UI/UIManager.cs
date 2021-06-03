@@ -2,6 +2,7 @@
 using UnityEngine;
 using System;
 using UnityEngine.UI;
+using MiniGames.UI;
 
 public class UIManager : MonoBehaviour
 {

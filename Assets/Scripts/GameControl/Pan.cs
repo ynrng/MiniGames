@@ -1,11 +1,12 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Pan : MonoBehaviour
 {
-    [SerializeField] private GameState gameState;// = default;
-    [SerializeField] private InputManagerSO _inputManagerSO = default;
+    [SerializeField] private GameSO _gameSO;
+    [SerializeField] private InputManagerSO _inputManagerSO;
 
     // Start is called before the first frame update
     void Start()
@@ -18,7 +19,6 @@ public class Pan : MonoBehaviour
     void OnEnable()
     {
         _inputManagerSO.moveEvent += OnMove;
-        // _inputManagerSO.rotateEvent += OnRotate;
 
     }
 
@@ -28,7 +28,6 @@ public class Pan : MonoBehaviour
     void OnDisable()
     {
         _inputManagerSO.moveEvent -= OnMove;
-        // _inputManagerSO.rotateEvent -= OnRotate;
 
     }
 
@@ -55,12 +54,23 @@ public class Pan : MonoBehaviour
 
     private void OnMove(Vector3 coord)
     {
-        Debug.Log("vec1:" + coord);
-        // 静止状态下，Z=-1，在判断Z<-2时，颠勺
-        if(coord.z < -2) {
-            
+        if (_gameSO.gameState == GameState.Playing)
+        {
+            // 静止状态下，Z=-1，在判断Z<-2时，颠勺？// todo 判断一下rotate的增量
+            if (coord.z < -2)
+            {
+
+            }
+            // 静止状态下 x,y=0 ，用x y来决定是否锅的倾斜，最大倾斜角
+            gameObject.transform.rotation = Quaternion.Euler(
+                Mathf.Clamp(coord.x, -30f, 30f),
+                Mathf.Clamp(-coord.z, -30f, 30f),
+                Mathf.Clamp(-coord.z, -15f, 15f));
+
+            Debug.Log("[Pan]OnMove:" + coord + ";" + gameObject.transform.rotation);
+
         }
-        // 静止状态下 x,y=0 ，用x y来决定是否锅的倾斜
+
     }
 
 }

@@ -6,8 +6,7 @@ using UnityEngine;
 
 public class Beef : MonoBehaviour
 {
-    [SerializeField] private GameSO _gameSO;
-    // [SerializeField] private InputManagerSO _inputManagerSO;
+    // -------------public--------------------
 
     [Header("red")]
     public Vector3 rightCoord;
@@ -18,9 +17,11 @@ public class Beef : MonoBehaviour
     [Header("blue")]
     public Vector3 forwardCoord;
 
+    // -------------private--------------------
+    [SerializeField] private GameSO _gameSO;
+    // [SerializeField] private InputManagerSO _inputManagerSO;
     private Rigidbody rb;
     private bool hasLanded = false;
-
     // private Vector3 panUp = Vector3.up;
     private int faceUp = -1; //-1表示未接触或处在翻滚中
     private const float faceUpThreshold = 0.9f;
@@ -34,13 +35,13 @@ public class Beef : MonoBehaviour
     }
 
     // Start is called before the first frame update
-    void Start()
+    private void Start()
     {
 
     }
 
     // Update is called once per frame
-    void Update()
+    private void Update()
     {
         if (_gameSO.gameState == GameState.Playing)
         {
@@ -102,7 +103,7 @@ public class Beef : MonoBehaviour
     /// touching another rigidbody/collider.
     /// </summary>
     /// <param name="other">The Collision data associated with this collision.</param>
-    void OnCollisionEnter(Collision other)
+    private void OnCollisionEnter(Collision other)
     {
 
         if (_gameSO.gameState == GameState.Playing && other.gameObject.CompareTag("PAN"))
@@ -124,7 +125,7 @@ public class Beef : MonoBehaviour
     /// that is touching rigidbody/collider.
     /// </summary>
     /// <param name="other">The Collision data associated with this collision.</param>
-    void OnCollisionStay(Collision other)
+    private void OnCollisionStay(Collision other)
     {
 
         Debug.Log("OnCollisionStay");
@@ -147,7 +148,7 @@ public class Beef : MonoBehaviour
         faceUp = -1;
     }
 
-    int GetCurrentFaceUp(Vector3 up)
+    private int GetCurrentFaceUp(Vector3 up)
     {
         if (Vector3.Dot(up, upCoord) > faceUpThreshold)
         {
@@ -175,6 +176,13 @@ public class Beef : MonoBehaviour
         }
         return -1;
 
+    }
+
+    // -------------public--------------------
+    public void addVelociy(float force)
+    {
+        // gameObject.transform.rotation=Quaternion.Euler()
+        rb.AddForce(upCoord * force, ForceMode.Impulse);
     }
 
 }

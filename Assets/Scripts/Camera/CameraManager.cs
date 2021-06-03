@@ -13,6 +13,7 @@ public class CameraManager : MonoBehaviour
     float acceleration2;
     Vector3 acceleration3;
     Quaternion acceleration4;
+    Quaternion acceleration5;
 
     // Start is called before the first frame update
 
@@ -34,6 +35,9 @@ public class CameraManager : MonoBehaviour
 
         string txt4 = "atti :" + (AttitudeSensor.current != null) + " enable:" + (AttitudeSensor.current != null && AttitudeSensor.current.enabled) + ":" + acceleration4.ToString();
         GUI.Label(new Rect(0, 110, Screen.width, 160), txt4, myButtonStyle);
+
+        string txt5 = "atti :" + (Gyroscope.current != null) + " enable:" + (Gyroscope.current != null && Gyroscope.current.enabled) + ":" + acceleration5.ToString();
+        GUI.Label(new Rect(0, 160, Screen.width, 210), txt5, myButtonStyle);
 
     }
 
@@ -85,6 +89,8 @@ public class CameraManager : MonoBehaviour
         // same as move
         // if (Accelerometer.current != null)
         //     acceleration = Accelerometer.current.acceleration.ReadValue();
+
+        acceleration5 = Input.gyro.attitude;
 
     }
 
