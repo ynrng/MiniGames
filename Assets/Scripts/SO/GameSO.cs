@@ -4,10 +4,13 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
+using UnityEngine.Events;
+using System.ComponentModel;
 
 [CreateAssetMenu(fileName = "GameSO", menuName = "SO/GameSO", order = 0)]
 public class GameSO : ScriptableObject
 {
+    public event UnityAction<GameState, GameState> onGameStateChange = delegate { };
 
     private GameState _gameState;
     public GameState gameState { get { return _gameState; } }
@@ -39,11 +42,11 @@ public class GameSO : ScriptableObject
         if (scene.name == "CookBeefScene")
         {
             Debug.Log("[GameSO]CookBeefScene Loaded");
-            ResetGameState();
+            ResetGameState(GameState.Start);
         }
     }
 
-    public void ResetGameState(GameState state = default)
+    public void ResetGameState([DefaultValue("GameState.Start")] GameState state = 0)
     {
         Debug.Log("[GameSO]ResetGameState:" + state);
         _gameState = state;
@@ -60,6 +63,14 @@ public class GameSO : ScriptableObject
 
     public void UpdateGameState(GameState state)
     {
+        if (_gameState != state)
+        {
+            if (state == GameState.Start)
+            {
+                ResetGameState();
+            }
+            onGameStateChange.Invoke(_gameState, state);
+        }
         Debug.Log("[GameSO]UpdateGameState:" + state);
         _gameState = state;
     }

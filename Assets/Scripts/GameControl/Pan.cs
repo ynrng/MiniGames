@@ -5,12 +5,16 @@ using UnityEngine;
 
 public class Pan : MonoBehaviour
 {
+    public float velocityMultiplier = 1f;
+    // -------------private--------------------
     [SerializeField] private GameSO _gameSO;
-    [SerializeField] private InputManagerSO _inputManagerSO;
+    // [SerializeField] private InputManager _inputManagerSO;
 
-    // Start is called before the first frame update
-    void Start()
+    private Rigidbody rb;
+
+    private void Awake()
     {
+        rb = gameObject.GetComponent<Rigidbody>();
     }
 
     /// <summary>
@@ -18,7 +22,8 @@ public class Pan : MonoBehaviour
     /// </summary>
     void OnEnable()
     {
-        _inputManagerSO.moveEvent += OnMove;
+        InputManager.moveEvent += OnMove;
+        InputManager.gyroEvent += OnGyro;
 
     }
 
@@ -27,23 +32,8 @@ public class Pan : MonoBehaviour
     /// </summary>
     void OnDisable()
     {
-        _inputManagerSO.moveEvent -= OnMove;
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
-
-    void Recalculate()
-    {
-
-    }
-
-    public void StartPlaying()
-    {
+        InputManager.moveEvent -= OnMove;
+        InputManager.gyroEvent -= OnGyro;
 
     }
 
@@ -54,22 +44,49 @@ public class Pan : MonoBehaviour
 
     private void OnMove(Vector3 coord)
     {
-        if (_gameSO.gameState == GameState.Playing)
-        {
-            // 静止状态下，Z=-1，在判断Z<-2时，颠勺？// todo 判断一下rotate的增量
-            if (coord.z < -2)
-            {
 
-            }
-            // 静止状态下 x,y=0 ，用x y来决定是否锅的倾斜，最大倾斜角
-            gameObject.transform.rotation = Quaternion.Euler(
-                Mathf.Clamp(coord.x, -30f, 30f),
-                Mathf.Clamp(-coord.z, -30f, 30f),
-                Mathf.Clamp(-coord.z, -15f, 15f));
+        // // 静止状态下 x,y=0 ，用x y来决定是否锅的倾斜，最大倾斜角
+        // todo use lerp and curve 怎样克服抖动
+        rb.MoveRotation(Quaternion.Euler(
+            calcAngle(-coord.y / coord.z, 30f),
+            // calcAngle(coord.y, 30f)
+            0, // todo
+            calcAngle(coord.x / coord.z, 30f)
+            // Mathf.Clamp(-coord.y * 180, -30f, 30f),
+            //     Mathf.Clamp(coord.z * 180, -15f, 15f)
+            ));
 
-            Debug.Log("[Pan]OnMove:" + coord + ";" + gameObject.transform.rotation);
+        Debug.Log("[Pan]OnMove:" + coord + ";" + gameObject.transform.rotation);
 
-        }
+        // }
+
+    }
+
+    float calcAngle(float x, float varient)
+    {
+
+        return Mathf.Clamp(Mathf.Rad2Deg * Mathf.Atan(x), -20, 20);
+
+    }
+
+    private void OnGyro(Gyroscope gyro)
+    {
+
+                //     // gameObject.transform.rotation = InputManager.GyroToUnity(gyro.attitude);
+                //     // rb.MoveRotation(InputManager.GyroToUnity(gyro.attitude));
+                //     if (_gameSO.gameState == GameState.Playing)
+                //     {
+                //         // 静止状态下，Z=-1，在判断Z<-2时，颠勺？// todo 判断一下rotate的增量
+                //         if (gyro.userAcceleration.x > 1 && beef) // 手机横向翻转角度变化delta，右边向上>0
+                //         {
+                //             beef.addVelociy(Mathf.Clamp(gyro.userAcceleration.x, 1, 3) * velocityMultiplier);
+                //         }
+                //         // 静止状态下 x,y=0 ，用x y来决定是否锅的倾斜，最大倾斜角
+                //         // gameObject.transform.rotation = InputManager.GyroToUnity(gyro.attitude);
+
+                //         Debug.Log("[Pan]OnGyro:");
+
+                //     }
 
     }
 
