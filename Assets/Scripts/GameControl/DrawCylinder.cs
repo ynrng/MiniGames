@@ -6,6 +6,7 @@ using UnityEngine;
 public class DrawCylinder : MonoBehaviour
 {
     // -------------public--------------------
+    [Header("Cylinder Settings")]
     // how many segments do we want in between;
     /// <summary>高有几层</summary>
     public int segmentsHeight = 1; //

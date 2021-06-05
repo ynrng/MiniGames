@@ -22,19 +22,20 @@ public class Beef : MonoBehaviour
     [SerializeField] private GameSO _gameSO;
     // [SerializeField] private InputManagerSO _inputManagerSO;
     private Rigidbody rb;
-
+    private MeshRenderer meshRenderer;
+    private DrawCube cube;
     // private Vector3 panUp = Vector3.up;
     private int faceUp = -1; //-1表示未接触或处在翻滚中
     private const float faceUpThreshold = 0.9f;
     private const float moveTipThreshold = 5;//s
     private DateTime noFaceUpFromTime;
-    private MeshRenderer meshRenderer;
 
     private void Awake()
     {
         rb = gameObject.GetComponent<Rigidbody>();
         rb.useGravity = false;
         meshRenderer = gameObject.GetComponent<MeshRenderer>();
+        cube = gameObject.GetComponent<DrawCube>();
     }
 
     // Start is called before the first frame update
@@ -60,11 +61,6 @@ public class Beef : MonoBehaviour
 
     }
 
-    /// <summary>
-    /// OnCollisionEnter is called when this collider/rigidbody has begun
-    /// touching another rigidbody/collider.
-    /// </summary>
-    /// <param name="other">The Collision data associated with this collision.</param>
     private void OnCollisionEnter(Collision other)
     {
 
@@ -81,11 +77,6 @@ public class Beef : MonoBehaviour
 
     }
 
-    /// <summary>
-    /// OnCollisionStay is called once per frame for every collider/rigidbody
-    /// that is touching rigidbody/collider.
-    /// </summary>
-    /// <param name="other">The Collision data associated with this collision.</param>
     private void OnCollisionStay(Collision other)
     {
 
@@ -118,6 +109,7 @@ public class Beef : MonoBehaviour
                 rb.angularVelocity = Vector3.zero;
                 gameObject.transform.position = Constants.PosBeef;
                 gameObject.transform.rotation = Quaternion.identity;
+                cube.ResetFace();
                 meshRenderer.enabled = true;
                 break;
             case GameState.Playing:
@@ -164,6 +156,7 @@ public class Beef : MonoBehaviour
                             Debug.Log("[TODO]Face " + faceUp + " done!");
                             _gameSO.faceTimeLeft[faceUp] = 0;
                             _gameSO.faceUndone.Remove(faceUp);
+                            cube.UpdateFace(faceUp, true);
                         }
                     }
 
@@ -205,33 +198,33 @@ public class Beef : MonoBehaviour
         // order drew in Assets/Scripts/GameControl/DrawCylinder.cs
         if (Vector3.Dot(up, upCoord) > faceUpThreshold)
         {
-            _gameSO.faceCurrent = 5;
-            return 5;
-        }
-        if (Vector3.Dot(up, upCoord) < -faceUpThreshold)
-        {
             _gameSO.faceCurrent = 4;
             return 4;
         }
-        if (Vector3.Dot(up, rightCoord) > faceUpThreshold)
+        if (Vector3.Dot(up, upCoord) < -faceUpThreshold)
         {
-            _gameSO.faceCurrent = 3;
-            return 3;
+            _gameSO.faceCurrent = 5;
+            return 5;
         }
-        if (Vector3.Dot(up, rightCoord) < -faceUpThreshold)
+        if (Vector3.Dot(up, rightCoord) > faceUpThreshold)
         {
             _gameSO.faceCurrent = 1;
             return 1;
         }
-        if (Vector3.Dot(up, forwardCoord) > faceUpThreshold)
+        if (Vector3.Dot(up, rightCoord) < -faceUpThreshold)
         {
-            _gameSO.faceCurrent = 0;
-            return 0;
+            _gameSO.faceCurrent = 3;
+            return 3;
         }
-        if (Vector3.Dot(up, forwardCoord) < -faceUpThreshold)
+        if (Vector3.Dot(up, forwardCoord) > faceUpThreshold)
         {
             _gameSO.faceCurrent = 2;
             return 2;
+        }
+        if (Vector3.Dot(up, forwardCoord) < -faceUpThreshold)
+        {
+            _gameSO.faceCurrent = 0;
+            return 0;
         }
         _gameSO.faceCurrent = -1;
         return -1;

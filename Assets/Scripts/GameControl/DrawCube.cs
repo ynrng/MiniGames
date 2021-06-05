@@ -1,9 +1,13 @@
-
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using UnityEngine.SocialPlatforms;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 public class DrawCube : DrawCylinder
 {
+    [Header("Cube Settings")]
     public Material normalMaterial;
     public Material highlightMaterial;
 
@@ -11,16 +15,14 @@ public class DrawCube : DrawCylinder
     // private MeshFilter meshF;
     private MeshRenderer meshR;
 
-    [SerializeField] private Material[] conbinedMaterial;
+    private Material[] conbinedMatsNormal;
     // private Vector3[] vertices;
 
     private new void Awake()
     {
         base.Awake();
         meshR = gameObject.GetComponent<MeshRenderer>();
-    }
-    void Start()
-    {
+
         segmentsHeight = 1;
         segmentsRadial = 4;
         radiusRound = Mathf.Sqrt(2) / 2f;
@@ -28,18 +30,31 @@ public class DrawCube : DrawCylinder
         useSubmesh = true;
         sideOnly = false;
 
-        conbinedMaterial = new Material[segmentsRadial + (sideOnly ? 0 : 2)];
-        for (int i = 0; i < conbinedMaterial.Length; i++)
+        conbinedMatsNormal = new Material[segmentsRadial + (sideOnly ? 0 : 2)];
+        for (int i = 0; i < conbinedMatsNormal.Length; i++)
         {
-            conbinedMaterial[i] = normalMaterial;
+            conbinedMatsNormal[i] = normalMaterial;
         }
-        meshR.materials = conbinedMaterial;
+    }
 
+    void Start()
+    {
         Draw();
+        meshR.materials = conbinedMatsNormal;
     }
 
     public void UpdateFace(int index, bool useHighlight)
     {
-        conbinedMaterial[index] = useHighlight ? highlightMaterial : normalMaterial;
+        conbinedMatsNormal[index] = useHighlight ? highlightMaterial : normalMaterial;
+        meshR.materials = conbinedMatsNormal;
+    }
+
+    public void ResetFace()
+    {
+        for (int i = 0; i < conbinedMatsNormal.Length; i++)
+        {
+            conbinedMatsNormal[i] = normalMaterial;
+        }
+        meshR.materials = conbinedMatsNormal;
     }
 }
