@@ -53,11 +53,6 @@ public class Beef : MonoBehaviour
     {
         if (_gameSO.gameState == GameState.Playing)
         {
-            // if (!rb.useGravity)
-            // {
-            // rb.useGravity = true;
-            // }
-
             GameScore();
             CheckPosY();
             CheckVelocity();
@@ -207,35 +202,36 @@ public class Beef : MonoBehaviour
 
     private int GetCurrentFaceUp(Vector3 up)
     {
+        // order drew in Assets/Scripts/GameControl/DrawCylinder.cs
         if (Vector3.Dot(up, upCoord) > faceUpThreshold)
-        {
-            _gameSO.faceCurrent = 0;
-            return 0;
-        }
-        if (Vector3.Dot(up, upCoord) < -faceUpThreshold)
         {
             _gameSO.faceCurrent = 5;
             return 5;
         }
-        if (Vector3.Dot(up, rightCoord) > faceUpThreshold)
-        {
-            _gameSO.faceCurrent = 1;
-            return 1;
-        }
-        if (Vector3.Dot(up, rightCoord) < -faceUpThreshold)
+        if (Vector3.Dot(up, upCoord) < -faceUpThreshold)
         {
             _gameSO.faceCurrent = 4;
             return 4;
         }
-        if (Vector3.Dot(up, forwardCoord) > faceUpThreshold)
-        {
-            _gameSO.faceCurrent = 2;
-            return 2;
-        }
-        if (Vector3.Dot(up, forwardCoord) < -faceUpThreshold)
+        if (Vector3.Dot(up, rightCoord) > faceUpThreshold)
         {
             _gameSO.faceCurrent = 3;
             return 3;
+        }
+        if (Vector3.Dot(up, rightCoord) < -faceUpThreshold)
+        {
+            _gameSO.faceCurrent = 1;
+            return 1;
+        }
+        if (Vector3.Dot(up, forwardCoord) > faceUpThreshold)
+        {
+            _gameSO.faceCurrent = 0;
+            return 0;
+        }
+        if (Vector3.Dot(up, forwardCoord) < -faceUpThreshold)
+        {
+            _gameSO.faceCurrent = 2;
+            return 2;
         }
         _gameSO.faceCurrent = -1;
         return -1;
