@@ -55,10 +55,12 @@ public class InputManager : MonoBehaviour
         //Output the rotation rate, attitude and the enabled state of the gyroscope as a Label
         if (gyroEnabled)
         {
-            GUI.Label(new Rect(0, 0, Screen.width, fontSize), "Gyro rotation rate " + gyro.rotationRate, myButtonStyle);
-            GUI.Label(new Rect(0, fontSize, Screen.width, fontSize), "Gyro attitude" + gyro.attitude, myButtonStyle);
-            GUI.Label(new Rect(0, fontSize * 2, Screen.width, fontSize), "Gyro enabled : " + gyro.enabled, myButtonStyle);
-            GUI.Label(new Rect(0, fontSize * 3, Screen.width, fontSize), "accelerate: " + Input.acceleration, myButtonStyle);
+            GUI.Label(new Rect(0, fontSize * 0, Screen.width, fontSize), "Gyro enabled : " + gyro.enabled, myButtonStyle);
+            GUI.Label(new Rect(0, fontSize * 1, Screen.width, fontSize), "Gyro rotation rate " + gyro.rotationRate, myButtonStyle);
+            GUI.Label(new Rect(0, fontSize * 2, Screen.width, fontSize), "Gyro acce" + gyro.userAcceleration, myButtonStyle);
+            GUI.Label(new Rect(0, fontSize * 3, Screen.width, fontSize), "Gyro attitude" + gyro.attitude, myButtonStyle);
+            GUI.Label(new Rect(0, fontSize * 4, Screen.width, fontSize), "Gyro gravity" + gyro.gravity, myButtonStyle);
+            GUI.Label(new Rect(0, fontSize * 6, Screen.width, fontSize), "accelerate: " + Input.acceleration, myButtonStyle);
         }
         else
         {
@@ -117,6 +119,7 @@ public class InputManager : MonoBehaviour
     // -------------public--------------------
     public static Quaternion GyroToUnity(Quaternion q)
     {
+
         return new Quaternion(q.x, q.y, -q.z, -q.w);
     }
 }
