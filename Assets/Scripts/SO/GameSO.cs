@@ -19,10 +19,11 @@ public class GameSO : ScriptableObject
     public const float timeFail = 6000; // s
 
     // public int faceDone = 0; /* 已经煎完的面 */
-    public const float eachFaceDoneTime = 5; // s
+    public const float eachFaceDoneTime = 3; // s
     public List<float> faceTimeLeft;
     public List<int> faceUndone;// = new List<int>{ 0, 1, 2, 3, 4, 5 };
-    public int faceCurrent = 0;
+    public int faceUndoneCount = 6;
+    public int faceCurrent = 0; // debug
 
     // actually onCreate; so not called every launch
     // private void Awake() { }
@@ -57,6 +58,7 @@ public class GameSO : ScriptableObject
         // eachFaceDoneTime = 5000; // ms
         // faceTimeLeft = 0;
         faceUndone = new List<int> { 0, 1, 2, 3, 4, 5 };
+        faceUndoneCount = 6;
         faceCurrent = 0;
         faceTimeLeft = new List<float> { eachFaceDoneTime, eachFaceDoneTime, eachFaceDoneTime, eachFaceDoneTime, eachFaceDoneTime, eachFaceDoneTime };
     }
@@ -101,10 +103,25 @@ public class GameSO : ScriptableObject
         }
         return false;
     }
-    // todo 用faceTimeLeft实现?
+
     public bool CheckIsFaceRaw(int faceIndex)
     {
-        return faceUndone.Contains(faceIndex);
+        return faceTimeLeft[faceIndex] > 0;
+    }
+
+    public float SetFaceTimeLeft(int faceIndex, float delta)
+    {
+        if (faceTimeLeft[faceIndex] > 0)
+        {
+            faceTimeLeft[faceIndex] += delta;
+            if (faceTimeLeft[faceIndex] <= 0)
+            {
+                faceTimeLeft[faceIndex] = 0;
+                --faceUndoneCount;
+            }
+        }
+        return faceTimeLeft[faceIndex];
+
     }
 
 }

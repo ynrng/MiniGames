@@ -17,6 +17,7 @@ public class Beef : MonoBehaviour
 
     [Header("blue")]
     public Vector3 forwardCoord;
+    public Pan _pan;
 
     // -------------private--------------------
     [SerializeField] private GameSO _gameSO;
@@ -29,6 +30,9 @@ public class Beef : MonoBehaviour
     private const float faceUpThreshold = 0.9f;
     private const float moveTipThreshold = 5;//s
     private DateTime noFaceUpFromTime;
+
+    public float smoothPollStep = .5f;
+    public float rotateSelfRate = 10f;
 
     private void Awake()
     {
@@ -54,11 +58,21 @@ public class Beef : MonoBehaviour
     {
         if (_gameSO.gameState == GameState.Playing)
         {
-            GameScore();
-            CheckPosY();
-            CheckVelocity();
+            CheckPosY(); // if on pan
+            CheckVelocity(); // ?
+            GameScore(); // if win or lose
+            RotateWithPan();
         }
 
+    }
+    void RotateWithPan()
+    {
+        // if (_pan && _pan.IsPanCircling())
+        // {
+        //     // circle beef with pan && pull to center
+        //     rb.MovePosition(Vector3.MoveTowards(transform.position, _pan.transform.position, smoothPollStep));
+        //     rb.MoveRotation(Quaternion.AngleAxis(rotateSelfRate, Vector3.up));
+        // }
     }
 
     private void OnCollisionEnter(Collision other)
@@ -89,6 +103,7 @@ public class Beef : MonoBehaviour
         {
             // 判断向上的面，因为只有在这里才会移动位置
             faceUp = GetCurrentFaceUp(other.gameObject.transform.up);
+            _gameSO.faceCurrent = faceUp; // Debug Only
         }
 
     }
@@ -148,14 +163,11 @@ public class Beef : MonoBehaviour
                     if (_gameSO.CheckIsFaceRaw(faceUp))
                     {
                         // 如果没有熟，开始当前面的倒计时
-                        _gameSO.faceTimeLeft[faceUp] -= Time.deltaTime;
                         // 判断当前面倒计时是否>0，如果倒计时结束，那么显示提示/更改当前面颜色
-                        if (_gameSO.faceTimeLeft[faceUp] <= 0)
+                        if (_gameSO.SetFaceTimeLeft(faceUp, -Time.deltaTime) <= 0)
                         {
                             // todo ui & vibrate
                             Debug.Log("[TODO]Face " + faceUp + " done!");
-                            _gameSO.faceTimeLeft[faceUp] = 0;
-                            _gameSO.faceUndone.Remove(faceUp);
                             cube.UpdateFace(faceUp, true);
                         }
                     }
@@ -198,35 +210,28 @@ public class Beef : MonoBehaviour
         // order drew in Assets/Scripts/GameControl/DrawCylinder.cs
         if (Vector3.Dot(up, upCoord) > faceUpThreshold)
         {
-            _gameSO.faceCurrent = 4;
             return 4;
         }
         if (Vector3.Dot(up, upCoord) < -faceUpThreshold)
         {
-            _gameSO.faceCurrent = 5;
             return 5;
         }
         if (Vector3.Dot(up, rightCoord) > faceUpThreshold)
         {
-            _gameSO.faceCurrent = 1;
             return 1;
         }
         if (Vector3.Dot(up, rightCoord) < -faceUpThreshold)
         {
-            _gameSO.faceCurrent = 3;
             return 3;
         }
         if (Vector3.Dot(up, forwardCoord) > faceUpThreshold)
         {
-            _gameSO.faceCurrent = 2;
             return 2;
         }
         if (Vector3.Dot(up, forwardCoord) < -faceUpThreshold)
         {
-            _gameSO.faceCurrent = 0;
             return 0;
         }
-        _gameSO.faceCurrent = -1;
         return -1;
 
     }
