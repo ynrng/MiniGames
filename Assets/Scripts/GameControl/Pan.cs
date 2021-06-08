@@ -198,15 +198,15 @@ public class Pan : MonoBehaviour
         // use gravity instead of acceleration to 克服抖动
 
         rb.MoveRotation(Quaternion.Euler(
-            calcAngle(gyro.gravity.y, -gyro.gravity.z, -10, 6),
+            calcAngle(gyro.gravity.y, -gyro.gravity.z, 10),
             0,
             calcAngle(-gyro.gravity.x, 1)
         ));
 
     }
-    float calcAngle(float x, float y, float min = -15f, float max = 15f)
+    float calcAngle(float x, float y, float cut = 15f)
     {
-        return Mathf.Clamp(Mathf.Rad2Deg * Mathf.Atan2(x, y), min, max);
+        return Mathf.Clamp(Mathf.Rad2Deg * Mathf.Atan2(x, y), -cut, cut);
     }
 
     // -------------public--------------------

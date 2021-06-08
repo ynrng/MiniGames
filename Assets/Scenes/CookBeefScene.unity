@@ -1340,6 +1340,14 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 1632859774}
     m_Modifications:
+    - target: {fileID: 3684473183809749613, guid: a48b8ab5a6f8d4288b9d3f9719af3494, type: 3}
+      propertyPath: m_Mass
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3684473183809749613, guid: a48b8ab5a6f8d4288b9d3f9719af3494, type: 3}
+      propertyPath: m_AngularDrag
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 3715355768536820073, guid: a48b8ab5a6f8d4288b9d3f9719af3494, type: 3}
       propertyPath: m_Name
       value: BeefPF
