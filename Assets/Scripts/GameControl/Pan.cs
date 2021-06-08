@@ -1,20 +1,20 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using MiniGames.GameControl;
+using Unity.Mathematics;
 
 public class Pan : MonoBehaviour
 {
-    public float flipSpeed = 100f;
-    public float maxAngle = 15f;
-    public float smooth = .1f;
-    public float circleMoveStep = .01f;
-    public float circlingAngle = 20f;
-    public float circlingOffset = .03f;
     // -------------private--------------------
+    [SerializeField] private float flipSpeed = 100f;
+    [SerializeField] private float flipMaxAngle = 15f;
+    [SerializeField] private float smooth = .1f;
+    [SerializeField] private float circleMoveStep = .01f;
+    [SerializeField] private float circlingAngle = 20f;
+    [SerializeField] private float circlingOffset = .03f;
     [SerializeField] private PanState panState;
-    [SerializeField] private float yVelocity = 0f;
-    private static Vector3 originalPos = new Vector3(0, 2f, -4.5f);
+    private float flipVelocity = 0f;
+    private bool beefOnSurface = false;
 
     // -------------reference--------------------
     [SerializeField] private GameSO _gameSO;
@@ -24,7 +24,7 @@ public class Pan : MonoBehaviour
     {
         rb = gameObject.GetComponent<Rigidbody>();
         // rb.centerOfMass = new Vector3(0, 0.7f, -5f); //手柄上，影响颠勺时的旋转中心，sadly不起作用，最后只能用blender改pivot
-        resetPosition();
+        resetPosition(withAnimation: false, useRest: true);
     }
 
     /// <summary>
@@ -54,55 +54,79 @@ public class Pan : MonoBehaviour
     {
         if (_gameSO.gameState != GameState.Playing)
         {
-            resetPosition();
+            resetPosition(withAnimation: true, useRest: _gameSO.gameState != GameState.Start);
             return;
         }
-        if (panState == PanState.Flip)
+        switch (panState)
         {
-            resetPosition();
-            panState = PanState.Flipping;
-        }
-        else if (panState == PanState.Flipping)
-        {
-            if (rb.rotation.eulerAngles.x <= (360 - maxAngle + 0.5f) && rb.rotation.eulerAngles.x > 0.5f)
-            {
-                yVelocity = 0f;
-                panState = PanState.UnFlipping;
-                return;
-            }
-            pitchPan(360 - maxAngle);
-        }
-        else if (panState == PanState.UnFlipping)
-        {
-            if (rb.rotation.eulerAngles.x <= 0.5f || rb.rotation.eulerAngles.x >= (360f - 0.5f))
-            {
-                yVelocity = 0f;
-                rb.MoveRotation(Quaternion.identity);
-                panState = PanState.Circle;
-                return;
-            }
-            pitchPan(0, true);
-        }
-        else if (panState == PanState.Circle)
-        {
-            var targetPos = originalPos + Vector3.back * circlingOffset;
-            if (moveToTargetPos(targetPos))
-            {
-                panState = PanState.Circling;
-            }
-        }
-        else if (panState == PanState.Circling)
-        {
-            rotateRigidBodyAroundPointPosOnlyBy(rb, originalPos, Vector3.up, circlingAngle);
+            case PanState.Flip:
+                if (resetPosition(withAnimation: true, useRest: false))
+                {
+                    panState = PanState.Flipping;
+                }
+                break;
+            case PanState.Flipping:
+                if (rb.rotation.eulerAngles.x <= (360 - flipMaxAngle + 0.5f) && rb.rotation.eulerAngles.x > 0.5f)
+                {
+                    flipVelocity = 0f;
+                    panState = PanState.UnFlipping;
+                    return;
+                }
+                pitchPan(360 - flipMaxAngle);
+                break;
+            case PanState.UnFlipping:
+                if (rb.rotation.eulerAngles.x <= 0.5f || rb.rotation.eulerAngles.x >= (360f - 0.5f))
+                {
+                    flipVelocity = 0f;
+                    rotateToTargetRot(Quaternion.identity);//todo  calc target rot
+                    panState = beefOnSurface ? PanState.Circle : PanState.Tilting;
+                    return;
+                }
+                pitchPan(0, true);
+                break;
+            case PanState.Circle:
+                var targetPos = Constants.panPos + Vector3.back * circlingOffset;
+                if (moveToTargetPos(targetPos))
+                {
+                    panState = PanState.Circling;
+                }
+                break;
+            case PanState.Circling:
+                rotateRigidBodyAroundPointPosOnlyBy(rb, Constants.panPos, Vector3.up, circlingAngle);
+                break;
+            default:
+                if (!InputManager.GyroEnabled())
+                {
+                    doCircling();
+                }
+                break;
         }
     }
 
-    void resetPosition()
+    bool resetPosition(bool withAnimation, bool useRest)
     {
-        rb.MoveRotation(Quaternion.identity);
-        rb.MovePosition(originalPos);
+        if (!withAnimation)
+        {
+            rb.MoveRotation(Quaternion.identity);
+            rb.MovePosition(useRest ? Constants.panRestPos : Constants.panPos);
+            return true;
+        }
+        return moveToTargetPos(useRest ? Constants.panRestPos : Constants.panPos) && rotateToTargetRot(Quaternion.identity);
     }
 
+    bool rotateToTargetRot(Quaternion targetRot, float step = 5f)
+    {
+        if (Quaternion.Angle(targetRot, transform.rotation) < step)
+        {
+            rb.MoveRotation(targetRot);
+            return true;
+        }
+        else
+        {
+            rb.MoveRotation(Quaternion.RotateTowards(transform.rotation, targetRot, step));
+        }
+        return false;
+    }
     bool moveToTargetPos(Vector3 targetPos)
     {
         if (Vector3.Distance(targetPos, transform.position) < circleMoveStep)
@@ -121,6 +145,7 @@ public class Pan : MonoBehaviour
     {
         if (other.gameObject.CompareTag("BEEF"))
         {
+            beefOnSurface = true;
             Debug.Log("[pan]OnCollisionEnter" + other.relativeVelocity + ":" + transform.up);
             if (Vector3.Dot(other.relativeVelocity, transform.up) < -0.5f)
             {
@@ -134,8 +159,10 @@ public class Pan : MonoBehaviour
     }
     private void OnCollisionExit(Collision other)
     {
+        Debug.Log("exit[pan]" + other.gameObject.tag + " " + panState);
         if (other.gameObject.CompareTag("BEEF"))
         {
+            beefOnSurface = false;
             if (panState == PanState.Circle || panState == PanState.Circling)
             {
                 // stop cirlcling the pan;
@@ -146,7 +173,7 @@ public class Pan : MonoBehaviour
 
     private void pitchPan(float angle, bool reverse = false)
     {
-        float smoothAngle = Mathf.SmoothDampAngle(rb.rotation.eulerAngles.x, angle, ref yVelocity, smooth, flipSpeed);
+        float smoothAngle = Mathf.SmoothDampAngle(rb.rotation.eulerAngles.x, angle, ref flipVelocity, smooth, flipSpeed);
         rb.MoveRotation(Quaternion.AngleAxis(smoothAngle, Vector3.right));
     }
 
@@ -160,6 +187,14 @@ public class Pan : MonoBehaviour
     private void OnConfirm()
     {
         panState = PanState.Flip;
+    }
+
+    void doCircling()
+    {
+        if (panState != PanState.Circle && panState != PanState.Circling && beefOnSurface)
+        {
+            panState = PanState.Circle;
+        }
     }
 
     private void OnGyro(Gyroscope gyro)
@@ -177,16 +212,13 @@ public class Pan : MonoBehaviour
 
         if ((Mathf.Abs(gyro.gravity.x) <= 0.1 && Mathf.Abs(gyro.gravity.y) <= 0.1))
         {
-            if (panState != PanState.Circle && panState != PanState.Circling)
-            {
-                panState = PanState.Circle;
-            }
+            doCircling();
         }
         else
         {
             Debug.Log("[Pan]OnGyro1:" + gyro.gravity.x + " ," + gyro.gravity.y + "," + gyro.gravity.z);
             panState = PanState.Tilting;
-            if (!moveToTargetPos(originalPos))
+            if (!moveToTargetPos(Constants.panPos))
             {
                 Debug.Log("[Pan]Tilting & moving");
             }
@@ -210,9 +242,14 @@ public class Pan : MonoBehaviour
     }
 
     // -------------public--------------------
-    public bool IsPanCircling()
+    public bool IsCircling()
     {
         return panState == PanState.Circling;
+    }
+
+    public Vector3 Center()
+    {
+        return transform.position + Constants.panPivotCenter;
     }
 
 }
@@ -224,5 +261,5 @@ enum PanState
     Flip,
     Flipping,
     UnFlipping,
-    Tilting,
+    Tilting
 }

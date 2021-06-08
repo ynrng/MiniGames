@@ -97,9 +97,14 @@ public class InputManager : MonoBehaviour
         transform.rotation = GyroToUnity(Input.gyro.attitude);
     }
 
+    static public bool GyroEnabled()
+    {
+        return SystemInfo.supportsGyroscope;
+    }
+
     private bool EnableGyro()
     {
-        if (SystemInfo.supportsGyroscope)
+        if (GyroEnabled())
         {
             gyro = Input.gyro;
             gyro.enabled = true;

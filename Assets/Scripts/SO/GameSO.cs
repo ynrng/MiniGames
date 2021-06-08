@@ -16,7 +16,7 @@ public class GameSO : ScriptableObject
     public DateTime timeStart;
     public float timeSpent;
     public const float timeFail = 60; // s
-    public const float eachFaceDoneTime = 3; // s
+    public static float eachFaceDoneTime = 3; // s
     public float[] faceTimeLeft = new float[6];
     public int faceUndoneCount = 6;
     public int faceCurrent = -1; // debug

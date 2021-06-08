@@ -25,9 +25,9 @@ public class DrawCylinder : MonoBehaviour
     public bool sideOnly = true;
 
     // -------------private--------------------
-    [SerializeField] private List<Vector3> vertices;
-    [SerializeField] private List<int> triangles;
-    [SerializeField] private List<int>[] trianglesSub;
+    private List<Vector3> vertices;
+    private List<int> triangles;
+    private List<int>[] trianglesSub;
     private Mesh mesh;
 
     protected void Awake()

@@ -2,34 +2,24 @@ using System;
 using UnityEngine;
 using MiniGames.GameControl;
 
+[RequireComponent(typeof(Rigidbody), typeof(MeshRenderer))]
 public class Beef : MonoBehaviour
 {
     // -------------public--------------------
 
-    [Header("red")]
-    public Vector3 rightCoord;
-
-    [Header("green")]
-    public Vector3 upCoord;
-
-    [Header("blue")]
-    public Vector3 forwardCoord;
-    public Pan _pan;
-
     // -------------private--------------------
-    [SerializeField] private GameSO _gameSO;
+    private int faceUp = -1; //-1表示未接触或处在翻滚中
+    private const float faceUpThreshold = 0.9f;
+    private DateTime noFaceUpFromTime;
 
+    public float smoothPollStep = .05f;
+    public float rotateSelfRate = 1f;
+    // -------------reference--------------------
+    [SerializeField] private GameSO _gameSO;
+    [SerializeField] private Pan _pan;
     private Rigidbody rb;
     private MeshRenderer meshRenderer;
     private DrawCube cube;
-    // private Vector3 panUp = Vector3.up;
-    private int faceUp = -1; //-1表示未接触或处在翻滚中
-    private const float faceUpThreshold = 0.9f;
-    private const float moveTipThreshold = 5;//s
-    private DateTime noFaceUpFromTime;
-
-    public float smoothPollStep = .5f;
-    public float rotateSelfRate = 10f;
 
     private void Awake()
     {
@@ -64,12 +54,14 @@ public class Beef : MonoBehaviour
     }
     void RotateWithPan()
     {
-        // if (_pan && _pan.IsPanCircling())
-        // {
-        //     // circle beef with pan && // todo pull to center
-        //     rb.MovePosition(Vector3.MoveTowards(transform.position, _pan.transform.position, smoothPollStep));
-        //     rb.MoveRotation(Quaternion.AngleAxis(rotateSelfRate, Vector3.up));
-        // }
+        if (_pan && _pan.IsCircling() && faceUp != -1)
+        {
+            // circle beef with pan &&
+            rb.MoveRotation(Quaternion.AngleAxis(rotateSelfRate, Vector3.up) * transform.rotation);
+            // transform.RotateAround(transform.position, Vector3.up, rotateSelfRate); // same as above
+            // pull to center
+            rb.AddForce(_pan.Center() - transform.position);
+        }
     }
 
     private void OnCollisionEnter(Collision other)
@@ -89,10 +81,6 @@ public class Beef : MonoBehaviour
 
     private void OnCollisionStay(Collision other)
     {
-        upCoord = gameObject.transform.up;
-        rightCoord = gameObject.transform.right;
-        forwardCoord = gameObject.transform.forward;
-
         if (other.gameObject.CompareTag("PAN"))
         {
             // 判断向上的面，因为只有在这里才会移动位置
@@ -115,7 +103,7 @@ public class Beef : MonoBehaviour
                 rb.useGravity = false;
                 rb.velocity = Vector3.zero;
                 rb.angularVelocity = Vector3.zero;
-                gameObject.transform.position = Constants.PosBeef;
+                gameObject.transform.position = Constants.beefPos;
                 gameObject.transform.rotation = Quaternion.identity;
                 cube.ResetFace();
                 meshRenderer.enabled = true;
@@ -169,7 +157,7 @@ public class Beef : MonoBehaviour
                     {
                         noFaceUpFromTime = DateTime.Now;
                     }
-                    else if (DateTime.Now.Subtract(noFaceUpFromTime).TotalSeconds >= moveTipThreshold)
+                    else if (DateTime.Now.Subtract(noFaceUpFromTime).TotalSeconds >= GameSO.eachFaceDoneTime)
                     {
                         // todo ui
                         // 计时 超过时长 提示"Move your pan!"
@@ -196,28 +184,29 @@ public class Beef : MonoBehaviour
 
     private int GetCurrentFaceUp(Vector3 up)
     {
+
         // order drew in Assets/Scripts/GameControl/DrawCylinder.cs
-        if (Vector3.Dot(up, upCoord) > faceUpThreshold)
+        if (Vector3.Dot(up, transform.up) > faceUpThreshold)
         {
             return 4;
         }
-        if (Vector3.Dot(up, upCoord) < -faceUpThreshold)
+        if (Vector3.Dot(up, transform.up) < -faceUpThreshold)
         {
             return 5;
         }
-        if (Vector3.Dot(up, rightCoord) > faceUpThreshold)
+        if (Vector3.Dot(up, transform.right) > faceUpThreshold)
         {
             return 1;
         }
-        if (Vector3.Dot(up, rightCoord) < -faceUpThreshold)
+        if (Vector3.Dot(up, transform.right) < -faceUpThreshold)
         {
             return 3;
         }
-        if (Vector3.Dot(up, forwardCoord) > faceUpThreshold)
+        if (Vector3.Dot(up, transform.forward) > faceUpThreshold)
         {
             return 2;
         }
-        if (Vector3.Dot(up, forwardCoord) < -faceUpThreshold)
+        if (Vector3.Dot(up, transform.forward) < -faceUpThreshold)
         {
             return 0;
         }
