@@ -14,7 +14,7 @@ public class Pan : MonoBehaviour
     // -------------private--------------------
     [SerializeField] private PanState panState;
     [SerializeField] private float yVelocity = 0f;
-    private static Vector3 originalPos = new Vector3(0, 1.5f, -3.6f);
+    private static Vector3 originalPos = new Vector3(0, 2f, -4.5f);
 
     // -------------reference--------------------
     [SerializeField] private GameSO _gameSO;

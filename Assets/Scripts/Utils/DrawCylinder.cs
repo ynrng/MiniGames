@@ -34,10 +34,12 @@ public class DrawCylinder : MonoBehaviour
     {
         // to avoid add mesh multiple times; declare at top require;
         mesh = gameObject.GetComponent<MeshFilter>().mesh;
+        if (!mesh)
+        {
+            mesh = gameObject.AddComponent<MeshFilter>().mesh;
+        }
     }
-
-    // Start is called before the first frame update
-    private void Start()
+    private void OnValidate()
     {
         // Draw();
     }

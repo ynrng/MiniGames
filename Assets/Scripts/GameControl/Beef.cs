@@ -64,12 +64,12 @@ public class Beef : MonoBehaviour
     }
     void RotateWithPan()
     {
-        if (_pan && _pan.IsPanCircling())
-        {
-            // circle beef with pan && // todo pull to center
-            rb.MovePosition(Vector3.MoveTowards(transform.position, _pan.transform.position, smoothPollStep));
-            rb.MoveRotation(Quaternion.AngleAxis(rotateSelfRate, Vector3.up));
-        }
+        // if (_pan && _pan.IsPanCircling())
+        // {
+        //     // circle beef with pan && // todo pull to center
+        //     rb.MovePosition(Vector3.MoveTowards(transform.position, _pan.transform.position, smoothPollStep));
+        //     rb.MoveRotation(Quaternion.AngleAxis(rotateSelfRate, Vector3.up));
+        // }
     }
 
     private void OnCollisionEnter(Collision other)
