@@ -1,36 +1,30 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.Mathematics;
 using UnityEngine;
 
 public class Pan : MonoBehaviour
 {
-    public float velocityMultiplier = 1f;
-    public float flipSpeed = 0.001f;
-    public float maxAngle = 5f;
-    public float smooth = 1f;
-    public float circleMoveStep = .5f;
+    public float flipSpeed = 100f;
+    public float maxAngle = 15f;
+    public float smooth = .1f;
+    public float circleMoveStep = .01f;
     public float circlingAngle = 20f;
     public float circlingOffset = .03f;
-    public GameObject messCenter;
-    public Vector3 messCenterPos;
     // -------------private--------------------
-    [SerializeField] private GameSO _gameSO;
-    // [SerializeField] private InputManager _inputManagerSO;
-
-    private Rigidbody rb;
     [SerializeField] private PanState panState;
-    private Gyroscope flippingGyro;
     [SerializeField] private float yVelocity = 0f;
-    private static Vector3 originalPos = Vector3.up;
+    private static Vector3 originalPos = new Vector3(0, 1.5f, -3.6f);
+
+    // -------------reference--------------------
+    [SerializeField] private GameSO _gameSO;
+    private Rigidbody rb;
 
     private void Awake()
     {
         rb = gameObject.GetComponent<Rigidbody>();
-        // rb.centerOfMass = new Vector3(0, 0.7f, -5f); //手柄上，影响颠勺时的旋转中心
-        transform.position = originalPos;
-        messCenterPos = messCenter.transform.position;
+        // rb.centerOfMass = new Vector3(0, 0.7f, -5f); //手柄上，影响颠勺时的旋转中心，sadly不起作用，最后只能用blender改pivot
+        resetPosition();
     }
 
     /// <summary>
@@ -40,7 +34,6 @@ public class Pan : MonoBehaviour
     {
         InputManager.confirmEvent += OnConfirm;
         InputManager.gyroEvent += OnGyro;
-
     }
 
     /// <summary>
@@ -50,42 +43,41 @@ public class Pan : MonoBehaviour
     {
         InputManager.confirmEvent -= OnConfirm;
         InputManager.gyroEvent -= OnGyro;
-
     }
 
-    void Start()
-    {
-        OnConfirm();//todo delete
-    }
+    // void Start()
+    // {
+    //     OnConfirm();
+    // }
 
     private void Update()
     {
+        if (_gameSO.gameState != GameState.Playing)
+        {
+            resetPosition();
+            return;
+        }
         if (panState == PanState.Flip)
         {
-            // if ()
-            // {
             resetPosition();
             panState = PanState.Flipping;
-            // }
         }
         else if (panState == PanState.Flipping)
         {
-            Debug.Log("Flipping" + rb.rotation.eulerAngles.x + " <= " + (360 - maxAngle) + ":" + yVelocity);
-            if (rb.rotation.eulerAngles.x < 360 - maxAngle && rb.rotation.eulerAngles.x > 0)
+            if (rb.rotation.eulerAngles.x <= (360 - maxAngle + 0.5f) && rb.rotation.eulerAngles.x > 0.5f)
             {
                 yVelocity = 0f;
                 panState = PanState.UnFlipping;
                 return;
             }
-            pitchPan(maxAngle);
+            pitchPan(360 - maxAngle);
         }
         else if (panState == PanState.UnFlipping)
         {
-            Debug.Log("UnFlipping" + rb.rotation.eulerAngles.x + ":" + yVelocity);
-
-            if (rb.rotation.eulerAngles.x <= 0 || rb.rotation.eulerAngles.x >= 360)
+            if (rb.rotation.eulerAngles.x <= 0.5f || rb.rotation.eulerAngles.x >= (360f - 0.5f))
             {
                 yVelocity = 0f;
+                rb.MoveRotation(Quaternion.identity);
                 panState = PanState.Circle;
                 return;
             }
@@ -107,16 +99,6 @@ public class Pan : MonoBehaviour
 
     void resetPosition()
     {
-        // if (Quaternion.Distance(targetPos, transform.position) < circleMoveStep)
-        // {
-        //     rb.MovePosition(targetPos);
-        //     return true;
-        // }
-        // else
-        // {
-        //     rb.MovePosition(Vector3.MoveTowards(transform.position, targetPos, circleMoveStep));
-        // }
-        // return false;
         rb.MoveRotation(Quaternion.identity);
         rb.MovePosition(originalPos);
     }
@@ -139,37 +121,33 @@ public class Pan : MonoBehaviour
     {
         if (other.gameObject.CompareTag("BEEF"))
         {
-            // to catch the beef;
-            // if (panState == PanState.Flipping)
-            // {
-            //     panState = PanState.UnFlipping;
-            // }
+            Debug.Log("[pan]OnCollisionEnter" + other.relativeVelocity + ":" + transform.up);
+            if (Vector3.Dot(other.relativeVelocity, transform.up) < -0.5f)
+            {
+                // to catch the beef;
+                if (panState == PanState.Flipping)
+                {
+                    panState = PanState.UnFlipping;
+                }
+            }
+        }
+    }
+    private void OnCollisionExit(Collision other)
+    {
+        if (other.gameObject.CompareTag("BEEF"))
+        {
+            if (panState == PanState.Circle || panState == PanState.Circling)
+            {
+                // stop cirlcling the pan;
+                panState = PanState.Tilting;
+            }
         }
     }
 
     private void pitchPan(float angle, bool reverse = false)
     {
-
-        float smoothAngle = Mathf.SmoothDampAngle(rb.rotation.eulerAngles.x, 360 - angle, ref yVelocity, smooth, flipSpeed);
-        Debug.Log("pitch:" + rb.rotation.eulerAngles.x + ":" + smoothAngle);
-        if (yVelocity > 0)
-        {
-            if (smoothAngle > 180)
-            {
-                smoothAngle = Mathf.Clamp(smoothAngle, 360 - maxAngle, 360);
-            }
-            else
-            {
-                smoothAngle = Mathf.Clamp01(smoothAngle);
-            }
-        }
-        rotateRigidBodyAroundPointBy(rb, messCenterPos, Vector3.right * (reverse ? -1 : 1), smoothAngle);
-    }
-
-    void rotateRigidBodyAroundPointBy(Rigidbody rb, Vector3 origin, Vector3 axis, float angle)
-    {
-        Quaternion q = rotateRigidBodyAroundPointPosOnlyBy(rb, origin, axis, angle);
-        rb.MoveRotation(rb.transform.rotation * q);
+        float smoothAngle = Mathf.SmoothDampAngle(rb.rotation.eulerAngles.x, angle, ref yVelocity, smooth, flipSpeed);
+        rb.MoveRotation(Quaternion.AngleAxis(smoothAngle, Vector3.right));
     }
 
     Quaternion rotateRigidBodyAroundPointPosOnlyBy(Rigidbody rb, Vector3 origin, Vector3 axis, float angle)
@@ -182,28 +160,20 @@ public class Pan : MonoBehaviour
     private void OnConfirm()
     {
         panState = PanState.Flip;
-
     }
 
     private void OnGyro(Gyroscope gyro)
     {
+        if (_gameSO.gameState != GameState.Playing) return;
+
         if (panState == PanState.Flip || panState == PanState.Flipping || panState == PanState.UnFlipping) return;
 
-        // gameObject.transform.rotation = InputManager.GyroToUnity(gyro.attitude);
-        // rb.MoveRotation(InputManager.GyroToUnity(gyro.attitude));
-        // if (_gameSO.gameState == GameState.Playing)//todo uncomment
+        // 静止状态下，Z=-1，在判断Z<-2时，颠勺？
+        // if (gyro.userAcceleration.z > 1 && gyro.rotationRate.x > 1) // 手机横向翻转角度变化delta，右边向上>0
         // {
-        // 静止状态下，Z=-1，在判断Z<-2时，颠勺？// todo 判断一下rotate的增量
-        if (gyro.userAcceleration.z > 1 && gyro.rotationRate.x > 1) // 手机横向翻转角度变化delta，右边向上>0
-        {
-            // flippingGyro = gyro;
-            // maxAngle = Mathf.Clamp(gyro.rotationRate.x, 1f, 5f);
-
-            /// todo use gyro to decide the maxAngle
-            /// and to make sure beef stay in air while filping pan
-            panState = PanState.Flip;
-            return;
-        }
+        //     panState = PanState.Flip;
+        //     return;
+        // }
 
         if ((Mathf.Abs(gyro.gravity.x) <= 0.1 && Mathf.Abs(gyro.gravity.y) <= 0.1))
         {
@@ -221,29 +191,25 @@ public class Pan : MonoBehaviour
                 Debug.Log("[Pan]Tilting & moving");
             }
         }
-        Debug.Log("[Pan]OnGyro2:" + gyro.gravity.x + " ," + gyro.gravity.y + "," + gyro.gravity.z);
+
+        if (gyro.gravity.magnitude == 0) return;
 
         // // 静止状态下 x,y=0 ，用x y来决定是否锅的倾斜，最大倾斜角
         // use gravity instead of acceleration to 克服抖动
 
         rb.MoveRotation(Quaternion.Euler(
-            calcAngle(gyro.gravity.y, -gyro.gravity.z),
-            0,// calcAngle(1, gyro.rotationRate.z, 10f),
+            calcAngle(gyro.gravity.y, -gyro.gravity.z, -10, 6),
+            0,
             calcAngle(-gyro.gravity.x, 1)
         ));
 
-        // var angleTilt = calcAngle(gyro.gravity.y, -gyro.gravity.z);
-        // pitchPan(Mathf.Abs(angleTilt), angleTilt >= 0);
-        // }
-
-        // // }
-
     }
-    float calcAngle(float x, float y, float varient = 20f)
+    float calcAngle(float x, float y, float min = -15f, float max = 15f)
     {
-        return Mathf.Clamp(Mathf.Rad2Deg * Mathf.Atan2(x, y), -varient, varient);
+        return Mathf.Clamp(Mathf.Rad2Deg * Mathf.Atan2(x, y), min, max);
     }
 
+    // -------------public--------------------
     public bool IsPanCircling()
     {
         return panState == PanState.Circling;

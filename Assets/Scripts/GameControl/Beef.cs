@@ -1,9 +1,6 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.ComponentModel;
-using MiniGames.GameControl;
 using UnityEngine;
+using MiniGames.GameControl;
 
 public class Beef : MonoBehaviour
 {
@@ -21,7 +18,7 @@ public class Beef : MonoBehaviour
 
     // -------------private--------------------
     [SerializeField] private GameSO _gameSO;
-    // [SerializeField] private InputManagerSO _inputManagerSO;
+
     private Rigidbody rb;
     private MeshRenderer meshRenderer;
     private DrawCube cube;
@@ -67,17 +64,16 @@ public class Beef : MonoBehaviour
     }
     void RotateWithPan()
     {
-        // if (_pan && _pan.IsPanCircling())
-        // {
-        //     // circle beef with pan && pull to center
-        //     rb.MovePosition(Vector3.MoveTowards(transform.position, _pan.transform.position, smoothPollStep));
-        //     rb.MoveRotation(Quaternion.AngleAxis(rotateSelfRate, Vector3.up));
-        // }
+        if (_pan && _pan.IsPanCircling())
+        {
+            // circle beef with pan && // todo pull to center
+            rb.MovePosition(Vector3.MoveTowards(transform.position, _pan.transform.position, smoothPollStep));
+            rb.MoveRotation(Quaternion.AngleAxis(rotateSelfRate, Vector3.up));
+        }
     }
 
     private void OnCollisionEnter(Collision other)
     {
-
         if (_gameSO.gameState == GameState.Playing && other.gameObject.CompareTag("PAN"))
         {
             // 开始煎牛排的总计时
@@ -93,8 +89,6 @@ public class Beef : MonoBehaviour
 
     private void OnCollisionStay(Collision other)
     {
-
-        Debug.Log("OnCollisionStay");
         upCoord = gameObject.transform.up;
         rightCoord = gameObject.transform.right;
         forwardCoord = gameObject.transform.forward;
@@ -110,7 +104,6 @@ public class Beef : MonoBehaviour
 
     private void OnCollisionExit(Collision other)
     {
-        Debug.Log("OnCollisionExit");
         faceUp = -1;
     }
 
@@ -131,10 +124,6 @@ public class Beef : MonoBehaviour
                 rb.useGravity = true;
                 break;
             case GameState.Win:
-            // meshRenderer.enabled = false;
-            // rb.useGravity = false;
-            // rb.velocity = Vector3.zero;
-            // break;
             case GameState.Lose:
                 meshRenderer.enabled = false;
                 rb.useGravity = false;
@@ -239,10 +228,7 @@ public class Beef : MonoBehaviour
     // -------------public--------------------
     public void addVelociy(float force)
     {
-        // gameObject.transform.rotation=Quaternion.Euler()
         rb.AddForce(Vector3.up * force, ForceMode.Impulse);
-        // rb.AddTorque()
-
     }
 
 }

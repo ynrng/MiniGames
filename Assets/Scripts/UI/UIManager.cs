@@ -6,34 +6,37 @@ using MiniGames.UI;
 
 public class UIManager : MonoBehaviour
 {
-
     [SerializeField] private GameSO _gameSO;
-    // attention to use the right Class (NOT TextMeshPro)
-    // private TMP_Text scoreLabelTMP;
     private Text textText;
-    // Start is called before the first frame update
+
     private void Awake()
     {
         textText = gameObject.GetComponent<Text>();
-        // scoreLabelTMP = gameObject.GetComponent<TMP_Text>();
+    }
+    void OnEnable()
+    {
+
+        InputManager.confirmEvent += OnConfirm;
     }
 
-    // Update is called once per frame
+    void OnDisable()
+    {
+        InputManager.confirmEvent -= OnConfirm;
+    }
+
     void Update()
     {
         switch (_gameSO.gameState)
         {
             case GameState.Start:
-                // scoreLabelTMP.SetText(Constants.k_StartLabel);
                 textText.text = Constants.k_StartLabel;
                 break;
             case GameState.Playing:
                 textText.text = String.Format(
                         Constants.k_ScoreLabel,
                         _gameSO.timeSpent,
-                        String.Join(",", _gameSO.faceUndone),
-                        _gameSO.faceCurrent,
-                        _gameSO.faceTimeLeft[_gameSO.faceCurrent],
+                        _gameSO.faceUndoneCount,
+                        _gameSO.faceCurrent >= 0 ? _gameSO.faceTimeLeft[_gameSO.faceCurrent] : -1,
                         (int)_gameSO.gameState
                     );
                 break;
@@ -44,10 +47,27 @@ public class UIManager : MonoBehaviour
                 textText.text = String.Format(
                         Constants.k_LoseLabel,
                         _gameSO.timeSpent,
-                        String.Join(",", _gameSO.faceUndone)
+                        _gameSO.faceUndoneCount
                     );
                 break;
 
+            default:
+                break;
+        }
+
+    }
+
+    private void OnConfirm()
+    {
+        switch (_gameSO.gameState)
+        {
+            case GameState.Start:
+                _gameSO.UpdateGameState(GameState.Playing);
+                break;
+            case GameState.Win:
+            case GameState.Lose:
+                _gameSO.UpdateGameState(GameState.Start);
+                break;
             default:
                 break;
         }
